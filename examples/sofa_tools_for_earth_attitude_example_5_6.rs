@@ -2,7 +2,47 @@ use sofa_sys::*;
 
 fn main() {
     unsafe {
-        gcrs_to_itrs();
+        println!("Original values from SOFA tools for Earth Attitude 5.6:");
+        gcrs_to_itrs(
+            // UTC
+            2007,
+            4,
+            5,
+            12,
+            0,
+            0.0,
+            // Polar motion (arcsec->radians)
+            0.0349282 * DAS2R,
+            0.4833163 * DAS2R,
+            // UT1-UTC (s)
+            -0.072073685,
+            // CIP offsets wrt IAU 2006/2000A (mas->radians)
+            0.1750 * DMAS2R,
+            -0.2259 * DMAS2R,
+        );
+        println!("\nDifferent values:");
+        // The polar motion xp,yp can be obtained from IERS bulletins.  The
+        // values are the coordinates (in radians) of the Celestial
+        // Intermediate Pole with respect to the International Terrestrial
+        // Reference System (see IERS Conventions 2003), measured along the
+        // meridians 0 and 90 deg west respectively.  For many
+        // applications, xp and yp can be set to zero.
+        // https://www.iers.org/IERS/EN/Publications/Bulletins/bulletins.html
+        // https://datacenter.iers.org/data/latestVersion/6_BULLETIN_A_V2013_016.txt
+        // https://datacenter.iers.org/data/latestVersion/207_BULLETIN_B207.txt
+        gcrs_to_itrs(
+            2020,
+            10,
+            10,
+            10,
+            10,
+            10.0,
+            184.598 * DMAS2R,
+            314.938 * DMAS2R,
+            -0.1703470,
+            0.083,
+            -0.020,
+        );
     }
 }
 
@@ -22,64 +62,50 @@ fn print_matrix(m: &[[f64; 3]; 3]) {
 }
 
 #[allow(unused_mut)]
-unsafe fn gcrs_to_itrs() {
-    let mut     iy: i32;
-    let mut     im: i32;
-    let mut     id: i32;
-    let mut     ih: i32;
-    let mut    min: i32;
-    let mut      j: i32;
+unsafe fn gcrs_to_itrs(
+    iy: i32,
+    im: i32,
+    id: i32,
+    ih: i32,
+    min: i32,
+    sec: f64,
+    xp: f64,
+    yp: f64,
+    dut1: f64,
+    dx06: f64,
+    dy06: f64,
+) {
+    let mut j: i32;
 
-    let mut    sec: f64;
-    let mut     xp: f64;
-    let mut     yp: f64;
-    let mut   dut1: f64;
-    let mut   dx06: f64;
-    let mut   dy06: f64;
     let mut djmjd0: f64 = 0.0;
-    let mut   date: f64 = 0.0;
-    let mut   time: f64;
-    let mut    utc: f64;
-    let mut    dat: f64 = 0.0;
-    let mut    tai: f64;
-    let mut     tt: f64;
-    let mut    tut: f64;
-    let mut    ut1: f64;
-    let mut  rc2ti: [[f64; 3]; 3] = [[0.0; 3]; 3];
-    let mut   rpom: [[f64; 3]; 3] = [[0.0; 3]; 3];
-    let mut  rc2it: [[f64; 3]; 3] = [[0.0; 3]; 3];
-    let mut      x: f64 = 0.0;
-    let mut      y: f64 = 0.0;
-    let mut      s: f64;
-    let mut   rc2i: [[f64; 3]; 3] = [[0.0; 3]; 3];
-    let mut    era: f64;
-
-    // UTC
-    iy = 2007;
-    im = 4;
-    id = 5;
-    ih = 12;
-    min = 0;
-    sec = 0.0;
-
-    // Polar motion (arcsec->radians)
-    xp = 0.0349282 * DAS2R;
-    yp = 0.4833163 * DAS2R;
-
-    // UT1-UTC (s)
-    dut1 = -0.072073685;
-
-    // CIP offsets wrt IAU 2006/2000A (mas->radians)
-    dx06 =  0.1750 * DMAS2R;
-    dy06 = -0.2259 * DMAS2R;
+    let mut date: f64 = 0.0;
+    let mut time: f64;
+    let mut utc: f64;
+    let mut dat: f64 = 0.0;
+    let mut tai: f64;
+    let mut tt: f64;
+    let mut tut: f64;
+    let mut ut1: f64;
+    let mut rc2ti: [[f64; 3]; 3] = [[0.0; 3]; 3];
+    let mut rpom: [[f64; 3]; 3] = [[0.0; 3]; 3];
+    let mut rc2it: [[f64; 3]; 3] = [[0.0; 3]; 3];
+    let mut x: f64 = 0.0;
+    let mut y: f64 = 0.0;
+    let mut s: f64;
+    let mut rc2i: [[f64; 3]; 3] = [[0.0; 3]; 3];
+    let mut era: f64;
 
     // TT (MJD)
     j = iauCal2jd(iy, im, id, &mut djmjd0, &mut date);
-    if j < 0 { return; }
+    if j < 0 {
+        return;
+    }
     time = (60.0 * (60 * ih + min) as f64 + sec) / DAYSEC;
     utc = date + time;
     j = iauDat(iy, im, id, time, &mut dat);
-    if j < 0 { return; }
+    if j < 0 {
+        return;
+    }
     tai = utc + dat / DAYSEC;
     tt = tai + 32.184 / DAYSEC;
     // UT1
