@@ -1,10 +1,10 @@
 [package]
 name = "sofa-sys"
-version = "2020.7.21-beta.1"
+version = "2020.7.21-beta.2"
 authors = ["AlexApps99"]
 edition = "2018"
 description = "Standards of Fundamental Astronomy (SOFA) Rust bindings"
-repository = "https://github.com/AlexApps99/sofa-sys"
+repository = "https://github.com/ZoussCity/sofa-sys"
 license-file = "LICENSE.txt"
 keywords = ["astronomy", "sofa", "erfa", "iau", "space"]
 categories = ["external-ffi-bindings", "mathematics", "science", "simulation"]
